@@ -52,3 +52,43 @@ Herramienta: Claude Code (modelo Claude Fable 5.1) como ejecutor técnico. Julio
 - Generar el seed con un script TypeScript: descartado por Julio a favor de plpgsql (ver dudas).
 - Fuentes de Google en el layout de `create-next-app`: quitadas para no depender de red en build.
 - Probar la server action de login con `curl` a mano: el protocolo de server actions no es trivial de imitar; se probó con el navegador.
+
+**Cierre de la fase (revisión de Julio).** PR #1 aprobado y mergeado sin cambios. Julio confirmó los cinco supuestos tal como quedaron.
+
+**Deuda declarada por Julio al cerrar la fase (va a DECISIONS.md).**
+- No existe la transición `waiting → open`. Un ticket en espera cuyo agente está ausente no se puede soltar. Queda declarado, no se cambia en v1.
+- Cancelar solo desde `open` deja sin salida a un ticket mal creado que ya fue tomado.
+
+---
+
+## Fase 2 · Vistas del solicitante y RPC de transición
+
+**Qué se pidió.** Plan antes de escribir código. Además: agregar `npm run build` al CI; las migraciones y el seed al proyecto cloud las aplica Julio desde el SQL Editor (el agente avisa cuándo), sin tocar el deny; Julio pone `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` del cloud en `.env.local` cuando el agente lo pida.
+
+**Dudas del agente y respuesta de Julio (antes de escribir código).**
+1. Ubicación del ticket: se copia del usuario, sin campo en el formulario. Julio anotó como deuda que esto no cubre al solicitante que reporta un problema de otra sede.
+2. Proyecto de Vercel: lo crea Julio (para que los secretos no pasen por el agente). El agente entrega pasos y variables exactas.
+3. SQL al cloud: apenas la migración 2 pase en local, antes del deploy.
+
+**Agregados de Julio.**
+- En `/tickets/[id]` verificar `can(user, "ticket.view", ticket)` en el servidor y devolver 404 si no pasa: "un solicitante que cambie el id en la URL no debe ver un ticket ajeno". Dejar test o prueba anotada en el reporte.
+- Julio aplicó las dos migraciones y el seed en el cloud desde el SQL Editor, verificó conteos, puso las variables en Vercel y en `.env.local`, e importó el repo en Vercel (proyecto `cofar-tickets`). Pidió aviso antes de escribir cualquier cosa en la base cloud: "ahí están los datos que va a ver Rodrigo".
+- El agente detectó que `SUPABASE_URL` en `.env.local` traía `/rest/v1/` al final; supabase-js necesita la URL base. Lo corrigió en local y lo anotó en el reporte para revisar el valor en Vercel.
+- Para no tocar el cloud, las pruebas locales del agente corren con las variables de Supabase local pasadas por línea de comandos, que tienen precedencia sobre `.env.local`.
+
+**Qué hizo el agente sin intervención.**
+- Migración `20260922100000_ticket_rpc.sql`: `create_ticket` (copia área y prioridad de la categoría, ubicación del solicitante, inserta ticket y evento `created`) y `apply_ticket_transition` (update con `where status = expected` + evento en la misma transacción; `ticket_state_conflict` si otro actor movió el ticket). Probada por psql: crear, tomar, segundo tomar rechazado, resolver, reabrir, cerrar, errores de ticket y categoría inexistentes.
+- `src/domain/events.ts`: esquemas Zod de payloads por tipo de evento y `buildTransitionEvent`, que decide si una transición emite `taken`, `released` o `status_changed`. 12 tests nuevos (98 en total).
+- `src/lib/db/tickets.ts` (lecturas con Zod sobre filas y wrappers de RPC) y `src/lib/actions/tickets.ts` (crear y transicionar: sesión, Zod, `can()`, `validateTransition`, RPC).
+- Layout con navegación gateada por `can()`, `/tickets`, `/tickets/new` (categorías agrupadas por área con su prioridad), `/tickets/[id]` con línea de tiempo y acciones genéricas según `allowedTransitions`, reutilizables por agentes en fase 3.
+- `npm run build` agregado al CI.
+
+**Decisiones del agente durante la fase.**
+- `/tickets/[id]` devuelve el mismo 404 para "no existe" y "no es tuyo", para no revelar que el id existe. Probado en Chrome como Rodrigo con un ticket de Carolina.
+- Detección de página desactualizada: el formulario de acción envía el estado que el usuario vio (`from`). Si difiere del actual, la action devuelve "El ticket cambió mientras lo veías" y refresca. La guarda de la RPC queda como segunda línea para la carrera entre lectura y escritura. Primera versión devolvía "cambio no válido", que era engañoso; corregido tras probarlo con un tomar concurrente por psql.
+- Errores de validación del formulario con `useActionState`, sin perder lo escrito.
+
+**Verificación.**
+- 98 tests, lint, typecheck y build en verde.
+- Chrome, base local, como Rodrigo: lista de mis tickets, 404 en ticket ajeno, crear TK-0045 (prioridad alta y área TI desde la categoría, ubicación Farmacia desde el usuario), cancelar, reabrir TK-0033 con motivo (mantiene a Felipe asignado), confirmar y cerrar, y conflicto de concurrencia en TK-0040.
+- Cloud, solo lectura: login y lista de Rodrigo con 18 tickets. Sin escrituras.
