@@ -4,12 +4,14 @@ import { can } from "@/domain/permissions";
 import { sortQueue } from "@/domain/queue";
 import { listTicketsByAssignee } from "@/lib/db/tickets";
 import { requireSessionUser } from "@/lib/session";
+import { attachSla } from "@/lib/sla";
 
 export default async function AssignedPage() {
   const user = await requireSessionUser();
   if (!can(user, "ticket.take")) notFound();
 
-  const tickets = sortQueue(await listTicketsByAssignee(user.id));
+  const withSla = await attachSla(await listTicketsByAssignee(user.id));
+  const tickets = sortQueue(withSla.map((t) => ({ ...t, slaRatio: t.sla.ratio })));
 
   return (
     <div>
@@ -17,7 +19,7 @@ export default async function AssignedPage() {
       <p className="mt-1 text-sm text-gray-600">Tickets que tienes en curso, en espera o resueltos sin confirmar.</p>
       <TicketTable
         tickets={tickets}
-        columns={["code", "title", "category", "location", "priority", "status", "created"]}
+        columns={["code", "title", "category", "location", "priority", "status", "sla", "deadline", "created"]}
         empty="No tienes tickets asignados."
       />
     </div>

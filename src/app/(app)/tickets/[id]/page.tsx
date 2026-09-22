@@ -5,7 +5,9 @@ import { allowedTransitions, can } from "@/domain/permissions";
 import { getTicketById, listTicketEvents } from "@/lib/db/tickets";
 import { formatDateTime } from "@/lib/format";
 import { requireSessionUser } from "@/lib/session";
+import { slaForTicket } from "@/lib/sla";
 import { PriorityForm } from "./PriorityForm";
+import { SlaPanel } from "./SlaPanel";
 import { TicketActions } from "./TicketActions";
 import { Timeline } from "./Timeline";
 
@@ -19,6 +21,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
   if (!ticket || !can(user, "ticket.view", ticket)) notFound();
 
   const events = await listTicketEvents(ticket.id);
+  const sla = await slaForTicket(ticket, events);
   const transitions = allowedTransitions(user, ticket);
   const canSetPriority = can(user, "ticket.set_priority", ticket);
 
@@ -49,7 +52,10 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
       </section>
 
       <aside>
-        <h2 className="text-lg font-medium">Acciones</h2>
+        <h2 className="text-lg font-medium">SLA</h2>
+        <SlaPanel sla={sla} />
+
+        <h2 className="mt-6 text-lg font-medium">Acciones</h2>
         <TicketActions ticketId={ticket.id} transitions={transitions} />
         {canSetPriority && (
           <>

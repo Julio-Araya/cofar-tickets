@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { PriorityBadge, StatusBadge } from "@/components/Badges";
-import type { TicketView } from "@/lib/db/tickets";
+import { SlaBadge, SlaDeadline } from "@/components/SlaBadge";
+import type { TicketWithSla } from "@/lib/sla";
 import { formatDateTime } from "@/lib/format";
 
-type Column = "code" | "title" | "category" | "location" | "area" | "status" | "priority" | "assignee" | "created";
+export type Column =
+  | "code" | "title" | "category" | "location" | "area" | "status" | "priority" | "assignee" | "created" | "sla" | "deadline";
 
 const HEADERS: Record<Column, string> = {
   code: "Código",
@@ -15,9 +17,11 @@ const HEADERS: Record<Column, string> = {
   priority: "Prioridad",
   assignee: "Asignado a",
   created: "Creado",
+  sla: "SLA",
+  deadline: "Límite",
 };
 
-function cell(t: TicketView, col: Column) {
+function cell(t: TicketWithSla, col: Column) {
   switch (col) {
     case "code":
       return <Link href={`/tickets/${t.id}`} className="font-mono hover:underline">{t.code}</Link>;
@@ -37,10 +41,14 @@ function cell(t: TicketView, col: Column) {
       return t.assigneeName ?? <span className="text-gray-400">Nadie</span>;
     case "created":
       return <span className="text-gray-600">{formatDateTime(t.createdAt)}</span>;
+    case "sla":
+      return <SlaBadge sla={t.sla} />;
+    case "deadline":
+      return <SlaDeadline sla={t.sla} />;
   }
 }
 
-export function TicketTable({ tickets, columns, empty }: { tickets: TicketView[]; columns: Column[]; empty: string }) {
+export function TicketTable({ tickets, columns, empty }: { tickets: TicketWithSla[]; columns: Column[]; empty: string }) {
   if (tickets.length === 0) return <p className="mt-6 text-sm text-gray-600">{empty}</p>;
   return (
     <table className="mt-4 w-full text-sm">
