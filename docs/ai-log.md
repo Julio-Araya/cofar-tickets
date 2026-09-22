@@ -37,6 +37,18 @@ Herramienta: Claude Code (modelo Claude Fable 5.1) como ejecutor técnico. Julio
 - Todos los roles tienen las acciones de dueño (`confirm`, `reopen`, `cancel`) sobre los tickets que ellos mismos crearon, porque el BRIEF dice que todos los roles pueden crear tickets.
 - El motivo de `waiting`, `resolved` y reabrir se guarda en `payload.reason` del evento.
 
+**Problemas que aparecieron y cómo se resolvieron.**
+- `supabase start` fallaba al levantar Studio: Docker Desktop no tiene permiso para montar carpetas dentro de `~/Documents` ("operation not permitted"). La migración y el seed ya habían corrido bien. Se apagó Studio en `config.toml`, junto con Realtime, Storage, Edge Functions, Analytics e Inbucket, que no se usan. Documentado en README.
+- El trigger de `updated_at` pisaba las fechas históricas del seed. El seed lo desactiva mientras corre y lo vuelve a activar.
+- El `.gitignore` de `create-next-app` ignora `.env*`, incluido `.env.example`. Se agregó la excepción.
+
+**Verificación hecha por el agente.**
+- 86 tests de dominio, lint y typecheck en verde. `next build` ok.
+- Seed en base local: 44 tickets (TK-0001 a TK-0044), 30 cerrados, 4 abiertos, 4 en curso, 2 en espera, 2 resueltos, 2 cancelados; 162 eventos, ninguno con fecha futura.
+- `update` y `delete` sobre `ticket_events` rechazados por el trigger. RLS activo en las 7 tablas.
+- Flujo de login probado en Chrome: entrar como agente y como supervisora, salir, redirección a `/login` sin cookie o con cookie inválida.
+
 **Enfoques descartados por el agente durante la fase.**
 - Generar el seed con un script TypeScript: descartado por Julio a favor de plpgsql (ver dudas).
 - Fuentes de Google en el layout de `create-next-app`: quitadas para no depender de red en build.
+- Probar la server action de login con `curl` a mano: el protocolo de server actions no es trivial de imitar; se probó con el navegador.

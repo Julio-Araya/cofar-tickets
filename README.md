@@ -18,11 +18,17 @@ npm run db:start          # levanta Postgres local, aplica migraciones y seed
 cp .env.example .env.local
 ```
 
-`supabase start` imprime la URL de la API y la `service_role key`. Cópialas en `.env.local`:
+`supabase start` imprime la URL de la API y la key de servicio (aparece como `Secret` o `service_role`, según la versión del CLI). Cópialas en `.env.local`:
 
 ```
 SUPABASE_URL=http://127.0.0.1:54321
-SUPABASE_SERVICE_ROLE_KEY=<service_role key>
+SUPABASE_SERVICE_ROLE_KEY=<secret / service_role key>
+```
+
+En `supabase/config.toml` están apagados Studio, Realtime, Storage, Edge Functions, Analytics e Inbucket: no se usan y acortan el arranque. Studio además necesita que Docker Desktop tenga permiso de compartir la carpeta del repo. Si quieres Studio, habilita ese permiso y pon `enabled = true` en `[studio]`. Para consultar la base sin Studio:
+
+```bash
+docker exec -it supabase_db_cofar-tickets psql -U postgres
 ```
 
 Luego:
