@@ -96,6 +96,18 @@ La entrada es una pantalla con los usuarios precargados agrupados por rol; el el
 
 **Cierre.** A ese volumen el problema deja de ser técnico. Con buena clasificación aparecen los patrones, y los patrones son los candidatos a resolución automática. El log de eventos y un catálogo gobernado valen más que optimizar la base. Primero se mide bien, después se automatiza.
 
+### Y una pregunta anterior: por qué existen 50.000 tickets
+
+**Ingesta.** Hoy el sistema asume que el solicitante entra a la web. A ese volumen hay que capturar donde la gente ya está: el POS de la farmacia, el ERP, WhatsApp. El modelo lo soporta: el ticket tiene `source` (el enum `ticket_source` hoy solo tiene `web`) y la categoría define el área y la prioridad, así que un canal nuevo es un adaptador sobre `create_ticket`, no un sistema paralelo. Un valor más en el enum y una función que traduce el mensaje a título, descripción, categoría y solicitante.
+
+**Que lleguen menos.** Un ticket es evidencia de que algo falló o de que alguien no supo hacer algo. Lo primero se ataca con observabilidad y monitoreo, que convierte tickets reactivos en alertas: el refrigerador que marca 8,5 °C debería avisar solo, no esperar a que Andrea lo escriba. Lo segundo, con autoservicio: el reinicio de clave no necesita un agente. El indicador de éxito no es resolver más rápido, es recibir menos. El log de eventos ya permite medir por categoría cuántos llegan y cuántos se resuelven en minutos, que es la señal de que sobran.
+
+**Resolución automática, en ese orden:** catálogo estandarizado, medir qué se repite, automatizar los patrones. Un agente sobre un catálogo sucio automatiza el error. Por eso la categorización automática se descartó en v1, y por eso reaparece acá, cuando hay histórico contra el cual calibrarla.
+
+**Quitarle la decisión al solicitante.** Mientras menos le preguntas, mejor. Hoy el solicitante elige la categoría, y elegir mal manda el ticket al área equivocada con la prioridad equivocada. La salida es que clasifique el sistema con el texto libre y el contexto que ya tiene (quién reporta, desde qué ubicación, con qué rol), no que el solicitante elija bien. Ese contexto ya está en el ticket: `requester_id`, `location_id` y el catálogo con `default_priority` son las entradas de ese clasificador.
+
+**Gobernanza.** No una gerencia nueva, sino un dueño del catálogo que probablemente no está en TI, y un rol que mire los datos del sistema para decidir qué automatizar, qué categoría sobra y qué SLA está mal calibrado. El modelo ya tiene dónde apoyarse: `categories.active` para retirar sin romper el histórico, `sla_policies.area_id` para calibrar por área, y `ticket_events` como la evidencia sobre la cual decidir.
+
 ## 7. Deuda técnica asumida
 
 Declarada al cerrar cada fase, en orden de aparición.
