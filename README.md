@@ -49,7 +49,8 @@ La key de servicio nunca llega al navegador: todo acceso a datos ocurre en el se
 
 ## Entrar
 
-La autenticación es simulada. En `/login` eliges uno de los usuarios precargados, agrupados por rol:
+La autenticación es simulada y el link desplegado es público (sin Deployment Protection), para que el revisor entre sin cuenta. Eso significa que **cualquiera con la URL puede entrar como cualquier usuario de prueba**. Es aceptable para una demo con datos ficticios; la versión real va con SSO corporativo y RLS sobre el JWT (ver DECISIONS.md).
+ En `/login` eliges uno de los usuarios precargados, agrupados por rol:
 
 | Rol | Usuarios | Qué ve |
 |---|---|---|

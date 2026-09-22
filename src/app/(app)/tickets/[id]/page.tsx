@@ -5,6 +5,7 @@ import { allowedTransitions, can } from "@/domain/permissions";
 import { getTicketById, listTicketEvents } from "@/lib/db/tickets";
 import { formatDateTime } from "@/lib/format";
 import { requireSessionUser } from "@/lib/session";
+import { PriorityForm } from "./PriorityForm";
 import { TicketActions } from "./TicketActions";
 import { Timeline } from "./Timeline";
 
@@ -19,6 +20,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
 
   const events = await listTicketEvents(ticket.id);
   const transitions = allowedTransitions(user, ticket);
+  const canSetPriority = can(user, "ticket.set_priority", ticket);
 
   return (
     <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
@@ -49,6 +51,14 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
       <aside>
         <h2 className="text-lg font-medium">Acciones</h2>
         <TicketActions ticketId={ticket.id} transitions={transitions} />
+        {canSetPriority && (
+          <>
+            <h2 className="mt-6 text-lg font-medium">Prioridad</h2>
+            <div className="mt-3">
+              <PriorityForm ticketId={ticket.id} current={ticket.priority} />
+            </div>
+          </>
+        )}
       </aside>
     </div>
   );

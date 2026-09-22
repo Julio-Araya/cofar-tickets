@@ -20,7 +20,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <nav className="flex gap-4 text-sm">
             {can(user, "ticket.view") && <Link href="/tickets" className="hover:underline">Mis tickets</Link>}
             {can(user, "ticket.create") && <Link href="/tickets/new" className="hover:underline">Nuevo ticket</Link>}
-            {can(user, "queue.view") && <span className="text-gray-400">Cola (fase 3)</span>}
+            {can(user, "queue.view") && <Link href="/queue" className="hover:underline">Cola</Link>}
+            {can(user, "ticket.take") && <Link href="/assigned" className="hover:underline">Mis asignados</Link>}
             {can(user, "dashboard.view") && <span className="text-gray-400">Dashboard (fase 4)</span>}
           </nav>
           <div className="ml-auto flex items-center gap-3 text-sm text-gray-600">

@@ -6,12 +6,13 @@ import { z } from "zod";
 import { can, actionForTransition } from "@/domain/permissions";
 import { validateTransition } from "@/domain/stateMachine";
 import { buildTransitionEvent } from "@/domain/events";
-import { TICKET_STATUSES } from "@/domain/types";
+import { PRIORITIES, TICKET_STATUSES } from "@/domain/types";
 import { requireSessionUser } from "@/lib/session";
 import {
   TicketStateConflictError,
   getTicketById,
   rpcApplyTransition,
+  rpcChangePriority,
   rpcCreateTicket,
 } from "@/lib/db/tickets";
 
@@ -118,5 +119,54 @@ export async function transitionTicketAction(_prev: ActionState, formData: FormD
 
   revalidatePath(`/tickets/${ticket.id}`);
   revalidatePath("/tickets");
+  revalidatePath("/queue");
+  revalidatePath("/assigned");
+  return {};
+}
+
+const prioritySchema = z.object({
+  ticketId: z.uuid(),
+  /** Priority the user saw when they submitted. */
+  from: z.enum(PRIORITIES),
+  to: z.enum(PRIORITIES),
+  reason: z.string().trim().min(1, "Escribe un motivo.").max(1000, "Máximo 1000 caracteres"),
+});
+
+export async function changePriorityAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireSessionUser();
+
+  const parsed = prioritySchema.safeParse({
+    ticketId: formData.get("ticketId"),
+    from: formData.get("from"),
+    to: formData.get("to"),
+    reason: formData.get("reason"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  const { ticketId, from, to, reason } = parsed.data;
+
+  const ticket = await getTicketById(ticketId);
+  if (!ticket || !can(user, "ticket.view", ticket)) return { error: "El ticket no existe." };
+  if (ticket.priority !== from) {
+    revalidatePath(`/tickets/${ticket.id}`);
+    return { error: STALE_MESSAGE };
+  }
+  if (to === from) return { error: "Elige una prioridad distinta a la actual." };
+  if (!can(user, "ticket.set_priority", ticket)) {
+    return { error: "No puedes cambiar la prioridad de este ticket en su estado actual." };
+  }
+
+  try {
+    await rpcChangePriority({ ticketId: ticket.id, actorId: user.id, expectedPriority: from, newPriority: to, reason });
+  } catch (e) {
+    if (e instanceof TicketStateConflictError) {
+      revalidatePath(`/tickets/${ticket.id}`);
+      return { error: STALE_MESSAGE };
+    }
+    throw e;
+  }
+
+  revalidatePath(`/tickets/${ticket.id}`);
+  revalidatePath("/queue");
+  revalidatePath("/assigned");
   return {};
 }

@@ -1,7 +1,14 @@
 import "server-only";
 import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { EVENT_TYPES, PRIORITIES, TICKET_STATUSES, type DomainTicket, type EventType } from "@/domain/types";
+import {
+  EVENT_TYPES,
+  PRIORITIES,
+  TICKET_STATUSES,
+  type DomainTicket,
+  type EventType,
+  type Priority,
+} from "@/domain/types";
 import type { AssigneeEffect } from "@/domain/stateMachine";
 
 // ---------------------------------------------------------------------------
@@ -125,6 +132,32 @@ export async function listTicketsByRequester(requesterId: string): Promise<Ticke
   return data.map(toTicketView);
 }
 
+const ACTIVE_STATUSES = ["open", "in_progress", "waiting", "resolved"] as const;
+
+/** Non-terminal tickets of one area, or of every area when areaId is null (supervisor of all). */
+export async function listQueue(areaId: string | null): Promise<TicketView[]> {
+  let query = supabaseAdmin()
+    .from("tickets")
+    .select(TICKET_SELECT)
+    .in("status", [...ACTIVE_STATUSES])
+    .order("created_at", { ascending: true });
+  if (areaId) query = query.eq("area_id", areaId);
+  const { data, error } = await query;
+  if (error) throw new Error(`listQueue: ${error.message}`);
+  return data.map(toTicketView);
+}
+
+export async function listTicketsByAssignee(assigneeId: string): Promise<TicketView[]> {
+  const { data, error } = await supabaseAdmin()
+    .from("tickets")
+    .select(TICKET_SELECT)
+    .eq("assignee_id", assigneeId)
+    .in("status", [...ACTIVE_STATUSES])
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(`listTicketsByAssignee: ${error.message}`);
+  return data.map(toTicketView);
+}
+
 export async function getTicketById(id: string): Promise<TicketView | null> {
   const { data, error } = await supabaseAdmin()
     .from("tickets")
@@ -218,6 +251,27 @@ export async function rpcApplyTransition(input: {
   if (error) {
     if (error.message.includes("ticket_state_conflict")) throw new TicketStateConflictError();
     throw new Error(`apply_ticket_transition: ${error.message}`);
+  }
+  return rpcTicketSchema.parse(data);
+}
+
+export async function rpcChangePriority(input: {
+  ticketId: string;
+  actorId: string;
+  expectedPriority: Priority;
+  newPriority: Priority;
+  reason: string;
+}): Promise<{ id: string }> {
+  const { data, error } = await supabaseAdmin().rpc("change_ticket_priority", {
+    p_ticket_id: input.ticketId,
+    p_actor_id: input.actorId,
+    p_expected_priority: input.expectedPriority,
+    p_new_priority: input.newPriority,
+    p_reason: input.reason,
+  });
+  if (error) {
+    if (error.message.includes("ticket_state_conflict")) throw new TicketStateConflictError();
+    throw new Error(`change_ticket_priority: ${error.message}`);
   }
   return rpcTicketSchema.parse(data);
 }
