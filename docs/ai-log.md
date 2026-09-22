@@ -64,3 +64,11 @@ Herramienta: Claude Code (modelo Claude Fable 5.1) como ejecutor técnico. Julio
 ## Fase 2 · Vistas del solicitante y RPC de transición
 
 **Qué se pidió.** Plan antes de escribir código. Además: agregar `npm run build` al CI; las migraciones y el seed al proyecto cloud las aplica Julio desde el SQL Editor (el agente avisa cuándo), sin tocar el deny; Julio pone `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` del cloud en `.env.local` cuando el agente lo pida.
+
+**Dudas del agente y respuesta de Julio (antes de escribir código).**
+1. Ubicación del ticket: se copia del usuario, sin campo en el formulario. Julio anotó como deuda que esto no cubre al solicitante que reporta un problema de otra sede.
+2. Proyecto de Vercel: lo crea Julio (para que los secretos no pasen por el agente). El agente entrega pasos y variables exactas.
+3. SQL al cloud: apenas la migración 2 pase en local, antes del deploy.
+
+**Agregados de Julio.**
+- En `/tickets/[id]` verificar `can(user, "ticket.view", ticket)` en el servidor y devolver 404 si no pasa: "un solicitante que cambie el id en la URL no debe ver un ticket ajeno". Dejar test o prueba anotada en el reporte.
