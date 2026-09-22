@@ -10,6 +10,8 @@ import {
   type Priority,
 } from "@/domain/types";
 import type { AssigneeEffect } from "@/domain/stateMachine";
+import { parseEventPayload } from "@/domain/events";
+import type { SlaPolicy } from "@/domain/sla";
 
 // ---------------------------------------------------------------------------
 // Rows
@@ -168,25 +170,74 @@ export async function getTicketById(id: string): Promise<TicketView | null> {
   return data ? toTicketView(data) : null;
 }
 
+const EVENT_SELECT = "id, ticket_id, actor_id, type, from_status, to_status, payload, created_at, actor:users(name)";
+
+/** Validates the row and its payload against the schema of its event type. A corrupt event fails loudly. */
+function toEventView(row: unknown): TicketEventView & { ticketId: string } {
+  const r = eventRowSchema.parse(row);
+  return {
+    id: r.id,
+    ticketId: r.ticket_id,
+    type: r.type,
+    fromStatus: r.from_status,
+    toStatus: r.to_status,
+    payload: parseEventPayload(r.type, r.payload),
+    createdAt: r.created_at,
+    actorName: r.actor?.name ?? "",
+  };
+}
+
 export async function listTicketEvents(ticketId: string): Promise<TicketEventView[]> {
   const { data, error } = await supabaseAdmin()
     .from("ticket_events")
-    .select("id, ticket_id, actor_id, type, from_status, to_status, payload, created_at, actor:users(name)")
+    .select(EVENT_SELECT)
     .eq("ticket_id", ticketId)
     .order("created_at", { ascending: true });
   if (error) throw new Error(`listTicketEvents: ${error.message}`);
+  return data.map(toEventView);
+}
+
+/** Events of many tickets in one query, grouped by ticket id, oldest first. */
+export async function listEventsForTickets(ticketIds: readonly string[]): Promise<Map<string, TicketEventView[]>> {
+  const byTicket = new Map<string, TicketEventView[]>();
+  if (ticketIds.length === 0) return byTicket;
+  const { data, error } = await supabaseAdmin()
+    .from("ticket_events")
+    .select(EVENT_SELECT)
+    .in("ticket_id", [...ticketIds])
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(`listEventsForTickets: ${error.message}`);
+  for (const row of data) {
+    const e = toEventView(row);
+    const list = byTicket.get(e.ticketId) ?? [];
+    list.push(e);
+    byTicket.set(e.ticketId, list);
+  }
+  return byTicket;
+}
+
+const policyRowSchema = z.object({
+  priority: z.enum(PRIORITIES),
+  area_id: z.uuid().nullable(),
+  resolution_hours: z.number().int().positive(),
+});
+
+export async function listSlaPolicies(): Promise<SlaPolicy[]> {
+  const { data, error } = await supabaseAdmin().from("sla_policies").select("priority, area_id, resolution_hours");
+  if (error) throw new Error(`listSlaPolicies: ${error.message}`);
   return data.map((row) => {
-    const r = eventRowSchema.parse(row);
-    return {
-      id: r.id,
-      type: r.type,
-      fromStatus: r.from_status,
-      toStatus: r.to_status,
-      payload: r.payload,
-      createdAt: r.created_at,
-      actorName: r.actor?.name ?? "",
-    };
+    const r = policyRowSchema.parse(row);
+    return { priority: r.priority, areaId: r.area_id, resolutionHours: r.resolution_hours };
   });
+}
+
+/** Every non-cancelled ticket of the scope: active ones plus history for the 30-day metrics. */
+export async function listTicketsForDashboard(areaId: string | null): Promise<TicketView[]> {
+  let query = supabaseAdmin().from("tickets").select(TICKET_SELECT).neq("status", "cancelled");
+  if (areaId) query = query.eq("area_id", areaId);
+  const { data, error } = await query;
+  if (error) throw new Error(`listTicketsForDashboard: ${error.message}`);
+  return data.map(toTicketView);
 }
 
 export async function listActiveCategories(): Promise<CategoryOption[]> {
