@@ -102,3 +102,11 @@ Herramienta: Claude Code (modelo Claude Fable 5.1) como ejecutor técnico. Julio
 ## Fase 3 · Vistas del agente
 
 **Qué se pidió.** Plan antes de escribir código.
+
+**Dudas del agente y respuesta de Julio (antes de escribir código).**
+1. Cola del área: incluye todo lo no terminal, con los resueltos al final.
+2. Cambio de prioridad: solo desde el detalle, donde el motivo tiene contexto.
+
+**Agregados de Julio.**
+- Columna de ubicación en la cola: "el mismo problema no pesa igual en la farmacia que en la oficina, y el dato ya está en el ticket".
+- La migración 3 revoca execute a `anon` y `authenticated`, igual que las RPC de la fase 2.
