@@ -2,7 +2,7 @@
 
 Sistema de tickets de soporte interno para Cofar Salud. Ejercicio técnico.
 
-- **Demo:** https://tickets-cofar.relevostudio.com (o la URL de producción del proyecto `cofar-tickets` en Vercel)
+- **Demo:** https://cofar-tickets.relevostudio.com
 - **Alcance y decisiones ya tomadas:** [BRIEF.md](BRIEF.md)
 - **Decisiones de producto y arquitectura, escala y deuda:** [DECISIONS.md](DECISIONS.md)
 - **Cómo se trabajó con agentes de IA:** [AI-USAGE.md](AI-USAGE.md), alimentado por [docs/ai-log.md](docs/ai-log.md)

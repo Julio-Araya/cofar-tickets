@@ -65,7 +65,7 @@ Ambos se calculan sobre el log de eventos. La arquitectura rinde dos veces.
 - Vitest para tests
 - Tailwind para la UI, sin esfuerzo de diseño
 - GitHub Actions: lint, typecheck y tests en cada PR
-- Deploy en Vercel, proyecto nuevo, subdominio `tickets-cofar.relevostudio.com`
+- Deploy en Vercel, proyecto nuevo, subdominio `cofar-tickets.relevostudio.com`
 - Código en inglés, interfaz en español
 
 ## 5. Perfiles y permisos
