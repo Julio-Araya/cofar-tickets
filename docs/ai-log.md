@@ -92,3 +92,13 @@ Herramienta: Claude Code (modelo Claude Fable 5.1) como ejecutor técnico. Julio
 - 98 tests, lint, typecheck y build en verde.
 - Chrome, base local, como Rodrigo: lista de mis tickets, 404 en ticket ajeno, crear TK-0045 (prioridad alta y área TI desde la categoría, ubicación Farmacia desde el usuario), cancelar, reabrir TK-0033 con motivo (mantiene a Felipe asignado), confirmar y cerrar, y conflicto de concurrencia en TK-0040.
 - Cloud, solo lectura: login y lista de Rodrigo con 18 tickets. Sin escrituras.
+
+**Cierre de la fase (revisión de Julio).** PR #2 aprobado y mergeado sin cambios. Observaciones:
+- `events.ts` define `parseEventPayload` pero la línea de tiempo no lo usa. Julio: conectarlo en la fase 4, donde el SLA va a leer esos payloads.
+- Julio desactiva Deployment Protection en Vercel para que el revisor abra la URL sin cuenta. Pide documentar en README y DECISIONS.md que, con auth simulada y link público, cualquiera puede entrar como cualquier usuario de prueba, y que la versión real iría con SSO.
+
+---
+
+## Fase 3 · Vistas del agente
+
+**Qué se pidió.** Plan antes de escribir código.
