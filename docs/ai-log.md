@@ -171,3 +171,11 @@ Herramienta: Claude Code (modelo Claude Fable 5.1) como ejecutor técnico. Julio
 ## Fase 5 · Documentos finales
 
 **Qué se pidió.** DECISIONS.md, AI-USAGE.md, TESTING.md y README final, armados desde este log y los reportes de PR. Sin test end-to-end: documentar en TESTING.md qué se probó, qué no y con qué criterio. Agregar a DECISIONS.md que mostrar el SLA al solicitante fue una decisión de producto (transparencia sobre el compromiso). Para la pregunta de escala (50.000 tickets/mes y 5 áreas) Julio entregó su propia bajada, que el agente desarrolla con datos del código. Pendientes de la fase 3: espacio inicial en el README y evaluar la protección de `/assigned`.
+
+**Qué hizo el agente.**
+- DECISIONS.md con las siete secciones: modelo de datos, máquina de estados y permisos, SLA (incluida la decisión de producto de mostrarlo al solicitante y los tramos de prioridad), opcionales, auth simulada y link público, escala a 50.000 tickets/mes y 5 áreas desarrollando la bajada de Julio con los nombres de las funciones y tablas que rompen primero, y la deuda asumida.
+- TESTING.md: criterio, tabla de los 127 tests por módulo, lo probado a mano por `psql` y en Chrome con evidencia, lo no probado y por qué, siguientes pasos.
+- AI-USAGE.md armado desde este log: herramientas, estructura del contexto, ciclo por fase, qué se delegó, dónde intervino Julio con sus palabras, qué se rechazó, qué detectó el agente solo, qué funcionó y qué no.
+- README final con recorrido sugerido, orden de los cuatro archivos SQL para el cloud y mapa del repo.
+- Pendientes de la fase 3: espacio inicial del README eliminado; `/assigned` se mantiene con `can(user, "ticket.take")` con comentario en el código y la evaluación en DECISIONS.md §7 (agregar `assigned.view` cambiaría la lista cerrada de acciones del BRIEF).
+- Interpretación de dos erratas en la bajada de escala de Julio: "elente de verdad" como "el evento como fuente de verdad" y "aparecen los pson los candidatos" como "aparecen los patrones, y los patrones son los candidatos".
