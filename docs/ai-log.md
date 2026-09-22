@@ -163,3 +163,11 @@ Herramienta: Claude Code (modelo Claude Fable 5.1) como ejecutor técnico. Julio
 - TK-0021 (cambio de alta a media en el seed): 0,75 h en alta y 6 h en media dan 44 %, cumplido. TK-0039 en espera: 15 h consumidas, 35,3 h descontadas, límite pausado.
 - Cola ordenada por SLA dentro de cada grupo, resueltos al final con "Cumplido".
 - No se escribió nada en el cloud.
+
+**Cierre de la fase (revisión de Julio).** PR #4 aprobado y mergeado sin cambios.
+
+---
+
+## Fase 5 · Documentos finales
+
+**Qué se pidió.** DECISIONS.md, AI-USAGE.md, TESTING.md y README final, armados desde este log y los reportes de PR. Sin test end-to-end: documentar en TESTING.md qué se probó, qué no y con qué criterio. Agregar a DECISIONS.md que mostrar el SLA al solicitante fue una decisión de producto (transparencia sobre el compromiso). Para la pregunta de escala (50.000 tickets/mes y 5 áreas) Julio entregó su propia bajada, que el agente desarrolla con datos del código. Pendientes de la fase 3: espacio inicial en el README y evaluar la protección de `/assigned`.
