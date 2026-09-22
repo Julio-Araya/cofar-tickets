@@ -71,13 +71,25 @@ La autenticación es simulada. En `/login` eliges uno de los usuarios precargado
 
 ```
 src/domain/        lógica pura: tipos, máquina de estados, permisos (con tests)
-src/lib/           acceso a datos y sesión, solo servidor
+src/lib/db         consultas y llamadas a las RPC, solo servidor
+src/lib/actions    server actions: validan con Zod, preguntan can() y llaman a la RPC
+src/lib/           sesión, env, etiquetas
 src/app/           rutas de Next.js
 supabase/          migraciones y seed
 docs/ai-log.md     registro de uso de IA por fase
 ```
 
+## Deploy (Vercel)
+
+Proyecto `cofar-tickets` importado desde este repo, framework Next.js, Node 22. Variables de entorno:
+
+| Nombre | Valor |
+|---|---|
+| `SUPABASE_URL` | URL base del proyecto, `https://<ref>.supabase.co`, sin `/rest/v1` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Key `service_role` o `secret` (`sb_secret_...`) |
+
 ## Estado
 
-Fase 1 lista: esqueleto, esquema, seed, sesión simulada, dominio con tests, CI.
-Las vistas de solicitante, agente y supervisor llegan en las fases 2 a 4.
+- Fase 1: esqueleto, esquema, seed, sesión simulada, dominio con tests, CI.
+- Fase 2: vistas del solicitante (crear, mis tickets, detalle con línea de tiempo y acciones) y RPC de escritura con guarda de concurrencia.
+- Fases 3 y 4: vistas del agente, SLA y dashboard del supervisor.
