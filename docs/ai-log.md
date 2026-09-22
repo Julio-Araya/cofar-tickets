@@ -163,3 +163,20 @@ Herramienta: Claude Code (modelo Claude Fable 5.1) como ejecutor técnico. Julio
 - TK-0021 (cambio de alta a media en el seed): 0,75 h en alta y 6 h en media dan 44 %, cumplido. TK-0039 en espera: 15 h consumidas, 35,3 h descontadas, límite pausado.
 - Cola ordenada por SLA dentro de cada grupo, resueltos al final con "Cumplido".
 - No se escribió nada en el cloud.
+
+**Cierre de la fase (revisión de Julio).** PR #4 aprobado y mergeado sin cambios.
+
+---
+
+## Fase 5 · Documentos finales
+
+**Qué se pidió.** DECISIONS.md, AI-USAGE.md, TESTING.md y README final, armados desde este log y los reportes de PR. Sin test end-to-end: documentar en TESTING.md qué se probó, qué no y con qué criterio. Agregar a DECISIONS.md que mostrar el SLA al solicitante fue una decisión de producto (transparencia sobre el compromiso). Para la pregunta de escala (50.000 tickets/mes y 5 áreas) Julio entregó su propia bajada, que el agente desarrolla con datos del código. Pendientes de la fase 3: espacio inicial en el README y evaluar la protección de `/assigned`.
+
+**Qué hizo el agente.**
+- DECISIONS.md con las siete secciones: modelo de datos, máquina de estados y permisos, SLA (incluida la decisión de producto de mostrarlo al solicitante y los tramos de prioridad), opcionales, auth simulada y link público, escala a 50.000 tickets/mes y 5 áreas desarrollando la bajada de Julio con los nombres de las funciones y tablas que rompen primero, y la deuda asumida.
+- TESTING.md: criterio, tabla de los 127 tests por módulo, lo probado a mano por `psql` y en Chrome con evidencia, lo no probado y por qué, siguientes pasos.
+- AI-USAGE.md armado desde este log: herramientas, estructura del contexto, ciclo por fase, qué se delegó, dónde intervino Julio con sus palabras, qué se rechazó, qué detectó el agente solo, qué funcionó y qué no.
+- README final con recorrido sugerido, orden de los cuatro archivos SQL para el cloud y mapa del repo.
+- Pendientes de la fase 3: espacio inicial del README eliminado; `/assigned` se mantiene con `can(user, "ticket.take")` con comentario en el código y la evaluación en DECISIONS.md §7 (agregar `assigned.view` cambiaría la lista cerrada de acciones del BRIEF).
+- Interpretación de dos erratas en la bajada de escala de Julio: "elente de verdad" como "el evento como fuente de verdad" y "aparecen los pson los candidatos" como "aparecen los patrones, y los patrones son los candidatos".
+- **Aporte de Julio, después del PR.** Segunda parte de DECISIONS.md §6, "Y una pregunta anterior: por qué existen 50.000 tickets", con cinco puntos suyos: ingesta donde la gente ya está (adaptadores sobre `create_ticket`), que lleguen menos (observabilidad y autoservicio; "el indicador de éxito no es resolver más rápido, es recibir menos"), resolución automática en orden (catálogo, medir, automatizar; "un agente sobre un catálogo sucio automatiza el error"), quitarle la decisión al solicitante (que clasifique el sistema con texto y contexto), y gobernanza (dueño del catálogo fuera de TI y un rol que mire los datos). El agente lo redactó en prosa corta conectándolo con `ticket_source`, `create_ticket`, `requester_id`, `location_id`, `categories.active`, `sla_policies.area_id` y `ticket_events`. Interpretó una errata ("reaparece acáarle la decisión al usuario") como dos frases: el cierre del punto de resolución automática y el inicio de un punto propio sobre quitarle la decisión al solicitante.
