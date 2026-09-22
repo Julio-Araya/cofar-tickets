@@ -52,3 +52,15 @@ Herramienta: Claude Code (modelo Claude Fable 5.1) como ejecutor técnico. Julio
 - Generar el seed con un script TypeScript: descartado por Julio a favor de plpgsql (ver dudas).
 - Fuentes de Google en el layout de `create-next-app`: quitadas para no depender de red en build.
 - Probar la server action de login con `curl` a mano: el protocolo de server actions no es trivial de imitar; se probó con el navegador.
+
+**Cierre de la fase (revisión de Julio).** PR #1 aprobado y mergeado sin cambios. Julio confirmó los cinco supuestos tal como quedaron.
+
+**Deuda declarada por Julio al cerrar la fase (va a DECISIONS.md).**
+- No existe la transición `waiting → open`. Un ticket en espera cuyo agente está ausente no se puede soltar. Queda declarado, no se cambia en v1.
+- Cancelar solo desde `open` deja sin salida a un ticket mal creado que ya fue tomado.
+
+---
+
+## Fase 2 · Vistas del solicitante y RPC de transición
+
+**Qué se pidió.** Plan antes de escribir código. Además: agregar `npm run build` al CI; las migraciones y el seed al proyecto cloud las aplica Julio desde el SQL Editor (el agente avisa cuándo), sin tocar el deny; Julio pone `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` del cloud en `.env.local` cuando el agente lo pida.
