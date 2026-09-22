@@ -128,3 +128,11 @@ Herramienta: Claude Code (modelo Claude Fable 5.1) como ejecutor técnico. Julio
 - Matías vuelve a tomar y resuelve con nota. "Mis asignados" lo muestra como resuelto.
 - Los 8 eventos del recorrido quedaron en `ticket_events` con los payloads esperados.
 - No se escribió nada en el cloud durante la fase.
+
+**Cierre de la fase (revisión de Julio).** PR #3 aprobado y mergeado sin cambios. Dos observaciones menores para la fase 5: limpiar el espacio al inicio de una línea del README, y evaluar si `/assigned` debería protegerse con algo más directo que `can(user, "ticket.take")`.
+
+---
+
+## Fase 4 · SLA, indicadores y dashboard
+
+**Qué se pidió.** Plan antes de escribir código. Además de lo del BRIEF: conectar `parseEventPayload` en la lectura de eventos (pendiente de la fase 2); el cálculo de SLA desde los eventos descontando los tramos en `waiting`, como función pura con tests ("ese es el corazón de la fase"); y cambiar el segundo criterio de `sortQueue` al SLA más comprometido.
