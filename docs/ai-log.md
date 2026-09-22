@@ -136,3 +136,30 @@ Herramienta: Claude Code (modelo Claude Fable 5.1) como ejecutor técnico. Julio
 ## Fase 4 · SLA, indicadores y dashboard
 
 **Qué se pidió.** Plan antes de escribir código. Además de lo del BRIEF: conectar `parseEventPayload` en la lectura de eventos (pendiente de la fase 2); el cálculo de SLA desde los eventos descontando los tramos en `waiting`, como función pura con tests ("ese es el corazón de la fase"); y cambiar el segundo criterio de `sortQueue` al SLA más comprometido.
+
+**Dudas del agente y respuesta de Julio (antes de escribir código).**
+1. El tramo entre resuelto y reabierto cuenta como tiempo consumido.
+2. El tiempo medio de resolución del dashboard es neto, el mismo que mide el SLA.
+
+**Corrección de Julio a un supuesto del agente.** El agente propuso calcular el objetivo con la prioridad actual del ticket. Julio: "rompe la auditabilidad: cambiar la prioridad reescribe el pasado y un ticket puede vencer o dejar de estar vencido por horas que corrieron bajo otro plazo". Se acumula por tramos: cada tramo de prioridad se mide contra su propio objetivo, usando los eventos `priority_changed` (que traen `from`, `to` y fecha). Si eso toma más de 20 minutos extra sobre el estimado, parar y avisar.
+
+**Agregados de Julio.** En las tablas mostrar la fecha límite además del porcentaje ("un supervisor necesita saber para cuándo"). En el detalle mostrar cuánto tiempo se descontó por esperas ("es lo que hace visible la regla").
+
+**Qué hizo el agente sin intervención.**
+- `src/domain/sla.ts`: `resolveTargets` (política del área sobre la por defecto) y `computeSla`, que recorre los eventos ordenados manteniendo prioridad vigente y estado de espera, acumula `Σ activo/objetivo` por tramo de prioridad, descuenta esperas, detiene el reloj en la última resolución y calcula la fecha límite (pasada o futura) como el instante en que la razón llega a 1. Pausado cuando está en espera. 18 tests, incluidos los tres casos de tramos: bajar prioridad no des-vence, subir prioridad acorta el resto, cambiar prioridad en espera no consume.
+- `src/domain/metrics.ts`: agregaciones del dashboard, 6 tests. `sortQueue` con razón de SLA como segundo criterio, tests ajustados. 127 tests en total.
+- `parseEventPayload` conectado en `toEventView`, que usan la línea de tiempo y la lectura por lotes. Parse estricto.
+- `listEventsForTickets` (una consulta para N tickets), `listSlaPolicies`, `listTicketsForDashboard`; `src/lib/sla.ts` une tickets, eventos y políticas fuera del dominio.
+- Columnas SLA y Límite en las tres listas; panel SLA en el detalle con objetivo, consumido, descontado por esperas y límite o reloj detenido; `/dashboard` con el alcance del supervisor.
+
+**Decisiones del agente durante la fase.**
+- La fecha límite de un ticket vencido es la que tuvo, no se recalcula. Un ticket en espera muestra "Pausado" en vez de una fecha, porque el límite se mueve mientras espera.
+- Un ticket detenido dentro del objetivo muestra "Cumplido" en lugar de "En plazo".
+- El color de la fecha límite usa el estado del dominio, no `Date.now()` en el render (regla de pureza de React lo rechazaba).
+- Tiempo extra por los tramos de prioridad: unos 10 minutos, dentro del margen de 20 que dio Julio.
+
+**Verificación en Chrome, base local, como Paula.**
+- Dashboard de todas las áreas: 12 activos, 4 sin dueño, 32 resueltos en 30 días, tiempo medio 14,2 h, cumplimiento 84 %, 4 vencidos y 2 en riesgo. Coincide con los escenarios diseñados en el seed (TK-0036, TK-0037, TK-0034, TK-0043 vencidos; TK-0038 y TK-0040 en riesgo).
+- TK-0021 (cambio de alta a media en el seed): 0,75 h en alta y 6 h en media dan 44 %, cumplido. TK-0039 en espera: 15 h consumidas, 35,3 h descontadas, límite pausado.
+- Cola ordenada por SLA dentro de cada grupo, resueltos al final con "Cumplido".
+- No se escribió nada en el cloud.
