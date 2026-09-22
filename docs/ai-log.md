@@ -110,3 +110,21 @@ Herramienta: Claude Code (modelo Claude Fable 5.1) como ejecutor técnico. Julio
 **Agregados de Julio.**
 - Columna de ubicación en la cola: "el mismo problema no pesa igual en la farmacia que en la oficina, y el dato ya está en el ticket".
 - La migración 3 revoca execute a `anon` y `authenticated`, igual que las RPC de la fase 2.
+- Julio aplicó la migración 3 en el cloud y verificó que las tres RPC quedan solo con postgres y service_role.
+
+**Qué hizo el agente sin intervención.**
+- Migración `20260922200000_priority_rpc.sql`: `change_ticket_priority` con guarda `where priority = expected and status in (open, in_progress, waiting)`, evento `priority_changed` con `{from, to, reason}`, rechazo de prioridad igual y de motivo vacío. Probada por psql.
+- Al revisar los grants, el agente detectó que el `revoke ... from anon, authenticated` de la fase 2 era cosmético: Postgres da `execute` a `PUBLIC` por defecto y `anon` podía llamar a `create_ticket` por REST (RLS sin políticas lo dejaba sin efecto, pero la función respondía). La migración 3 revoca a `PUBLIC` para las tres RPC y concede solo a `service_role`. Verificado: `anon` por REST recibe "permission denied".
+- `src/domain/queue.ts`: orden de la cola (sin dueño, prioridad, antigüedad; resueltos al final) con 5 tests. 103 en total.
+- `listQueue(areaId | null)`, `listTicketsByAssignee`, wrapper de la RPC, `changePriorityAction` con el mismo patrón que las demás actions, incluida la detección de página desactualizada por prioridad vista.
+- `/queue` (cola del área o de todas si el supervisor no tiene área, con columna de área en ese caso), `/assigned`, componente `TicketTable` compartido, formulario de prioridad en el detalle, links en la navegación gateados por `can()`.
+- README: nota sobre auth simulada y link público.
+
+**Verificación en Chrome, base local.**
+- Rodrigo (solicitante) recibe 404 en `/queue`.
+- Matías: cola de TI con 7 activos, 2 sin dueño, ordenados como pide el dominio. Toma TK-0036, lo pone en espera con motivo, baja la prioridad a media con motivo estando en espera, retoma.
+- Valentina: sobre el ticket de Matías no ve soltar ni transiciones, sí puede cambiar prioridad. "Mis asignados" muestra sus 3 tickets.
+- Paula: cola de todas las áreas (12 activos) con columna de área. En el detalle solo "Soltar" y prioridad. Suelta el ticket: evento `released` con el `assignee_id` de Matías como payload y actor Paula.
+- Matías vuelve a tomar y resuelve con nota. "Mis asignados" lo muestra como resuelto.
+- Los 8 eventos del recorrido quedaron en `ticket_events` con los payloads esperados.
+- No se escribió nada en el cloud durante la fase.
